@@ -1,0 +1,1 @@
+import{Ui as e}from"./es.js";var t=e({"sheets-note-ui":{note:{placeholder:`Escribe aquí`},rightClick:{addNote:`Agregar nota`,deleteNote:`Eliminar nota`,toggleNote:`Mostrar/Ocultar nota`}}});export{t as default};

@@ -1,0 +1,1 @@
+import{t as e}from"./jsxRuntime.module.js";function t({onClick:t,text:n,triggerCommand:r}){return e(`a`,{class:`tn-link`,href:`#`,"data-trigger-command":r,role:`button`,onKeyDown:e=>{e.code===`Space`&&t?.()},onClick:e=>{e.preventDefault(),t?.()},children:n})}export{t};

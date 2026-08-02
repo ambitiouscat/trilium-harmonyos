@@ -1,0 +1,1 @@
+import{Ui as e}from"./es.js";var t=e({"sheets-note-ui":{note:{placeholder:`在此输入`},rightClick:{addNote:`添加批注`,deleteNote:`删除批注`,toggleNote:`显示/隐藏批注`}}});export{t as default};

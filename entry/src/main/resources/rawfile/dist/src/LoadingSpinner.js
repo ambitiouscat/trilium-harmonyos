@@ -1,0 +1,1 @@
+import{t as e}from"./jsxRuntime.module.js";function t(){return e(`span`,{className:`bx bx-loader bx-spin`})}export{t};

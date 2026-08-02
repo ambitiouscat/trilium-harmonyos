@@ -1,0 +1,19 @@
+# Build outputs
+entry/build/
+entry/.cxx/
+
+# OHPM
+oh_modules/
+entry/oh_modules/
+
+# DevEco/Hvigor
+.hvigor/
+.idea/
+*.hvigorconfig.ts
+
+# Spike temp
+.spike-tmp/
+
+# OS metadata
+.DS_Store
+Thumbs.db

@@ -1,0 +1,1 @@
+import{n as e,t}from"./ReadOnlyText.js";export{e as ReadOnlyTextContent,t as default};

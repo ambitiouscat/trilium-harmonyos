@@ -1,0 +1,1 @@
+import{Kt as e}from"./app_context.js";import{t}from"./jsxRuntime.module.js";import{t as n}from"./Icon.js";function r({icon:r,text:i,children:a,className:o}){return t(`div`,{className:e(`no-items`,o),children:[t(n,{icon:r}),i,a]})}export{r as t};

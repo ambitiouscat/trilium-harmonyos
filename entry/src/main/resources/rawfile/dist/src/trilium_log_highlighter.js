@@ -1,0 +1,1 @@
+import{n as e}from"./trilium_log_highlighter2.js";export{e as triliumLogHighlighter};

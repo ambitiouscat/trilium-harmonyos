@@ -1,0 +1,1 @@
+import{Ui as e}from"./es.js";var t=e({"sheets-note-ui":{note:{placeholder:`Введите текст здесь`},rightClick:{addNote:`Добавить примечание`,deleteNote:`Удалить примечание`,toggleNote:`Показать/Скрыть примечание`}}});export{t as default};

@@ -1,0 +1,1 @@
+import{t as e}from"./jsxRuntime.module.js";function t({inputRef:t,id:n,onBlur:r,onChange:i,currentValue:a,className:o,...s}){return e(`textarea`,{ref:t,id:n,className:`form-control ${o??``}`,onChange:e=>{i?.(e.currentTarget.value)},onBlur:e=>{r?.(e.currentTarget.value)},style:{width:`100%`},...s,children:a})}export{t};

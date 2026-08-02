@@ -1,0 +1,1 @@
+import{t as e}from"./jsxRuntime.module.js";function t({onChange:t,value:n,min:r=0,max:i=100,...a}){let o=i-r;return e(`input`,{type:`range`,className:`slider`,value:n,min:r,max:i,style:{"--slider-fill-percent":`${o>0?Math.max(0,Math.min(100,(n-r)/o*100)):0}%`},onChange:e=>{t(e.currentTarget.valueAsNumber)},...a})}export{t};

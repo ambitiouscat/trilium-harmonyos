@@ -1,0 +1,1 @@
+import{n as e,t}from"./Attachment.js";export{t as AttachmentDetail,e as AttachmentList};

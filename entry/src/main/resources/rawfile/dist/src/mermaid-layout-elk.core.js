@@ -1,0 +1,2 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./render-X3XFXER2.js","./rolldown-runtime.js","./src8.js","./src3.js","./linear2.js","./chunk-ZW26E7AF.js"])))=>i.map(i=>d[i]);
+import{t as e}from"./preload-helper.js";import{t}from"./chunk-ZW26E7AF.js";var n=t(async()=>await e(()=>import(`./render-X3XFXER2.js`),__vite__mapDeps([0,1,2,3,4,5]),import.meta.url),`loader`),r=[{name:`elk`,loader:n,algorithm:`elk.layered`},...[`elk.stress`,`elk.force`,`elk.mrtree`,`elk.sporeOverlap`].map(e=>({name:e,loader:n,algorithm:e}))];export{r as default};

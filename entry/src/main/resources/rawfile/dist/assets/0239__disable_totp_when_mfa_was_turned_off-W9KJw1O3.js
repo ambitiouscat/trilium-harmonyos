@@ -1,0 +1,4 @@
+import{n as e}from"./rolldown-runtime-DAXXjFlN.js";import{fi as t,mi as n}from"./abstract_provider-C1QZyApg.js";var r;e((()=>{n(),r=()=>{let e=t();e.getValue(`SELECT value FROM options WHERE name = 'mfaEnabled'`)===`false`&&e.execute(`
+            UPDATE options
+               SET value = '', utcDateModified = ?
+             WHERE name IN ('totpEncryptionSalt', 'totpEncryptedSecret', 'totpVerificationHash')`,[new Date().toISOString()]),e.execute(`DELETE FROM options WHERE name = 'mfaEnabled'`),e.execute(`DELETE FROM entity_changes WHERE entityName = 'options' AND entityId = 'mfaEnabled'`)}}))();export{r as default};

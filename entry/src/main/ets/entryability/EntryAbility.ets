@@ -16,6 +16,8 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
+import { webview } from '@kit.ArkWeb';
+import { setupSwSchemeHandler } from 'libentry.so';
 
 const DOMAIN = 0x0000;
 
@@ -27,6 +29,19 @@ export default class EntryAbility extends UIAbility {
       hilog.error(DOMAIN, 'testTag', 'Failed to set colorMode. Cause: %{public}s', JSON.stringify(err));
     }
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
+    // spike: 预初始化 Web 引擎，保证 SchemeHandler 能拦截首个请求
+    try {
+      webview.WebviewController.initializeWebEngine();
+    } catch (err) {
+      hilog.error(DOMAIN, 'testTag', 'initializeWebEngine failed: %{public}s', JSON.stringify(err));
+    }
+    // spike: 为 ServiceWorker 注册 NDK scheme handler（必须在 BrowserContext 创建之后）
+    try {
+      const ok: boolean = (setupSwSchemeHandler as (resMgr: object) => boolean)(this.context.resourceManager);
+      hilog.info(DOMAIN, 'testTag', 'setupSwSchemeHandler -> %{public}s', String(ok));
+    } catch (err) {
+      hilog.error(DOMAIN, 'testTag', 'setupSwSchemeHandler failed: %{public}s', JSON.stringify(err));
+    }
   }
 
   onDestroy(): void {
@@ -37,7 +52,7 @@ export default class EntryAbility extends UIAbility {
     // Main window is created, set main page for this ability
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
 
-    windowStage.loadContent('pages/Index', (err) => {
+    windowStage.loadContent('pages/Shell', (err) => {
       if (err.code) {
         hilog.error(DOMAIN, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err));
         return;

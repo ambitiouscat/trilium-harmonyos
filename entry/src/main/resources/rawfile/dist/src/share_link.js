@@ -1,0 +1,1 @@
+function e(e,t){return t?new URL(`/share/${e}`,t).href:window.glob.httpBaseUrl?new URL(`/share/${e}`,window.glob.httpBaseUrl).href:`${location.protocol}//${location.host}${location.pathname}share/${e}`}export{e as t};

@@ -1,0 +1,1 @@
+import{t as e}from"./jsxRuntime.module.js";function t({children:t}){return e(`p`,{className:`form-text use-tn-links`,children:t})}export{t};

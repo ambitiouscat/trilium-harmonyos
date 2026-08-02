@@ -1,0 +1,1 @@
+import{p as e}from"./compat.module.js";import"./jsxRuntime.module.js";e();

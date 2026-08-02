@@ -1,0 +1,1 @@
+import{n as e,t}from"./jquery2.module.js";t();export{e as $,e as default,e as jQuery};

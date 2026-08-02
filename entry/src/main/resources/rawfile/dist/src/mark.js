@@ -1,0 +1,1 @@
+import{t as e}from"./mark2.js";export default e();

@@ -1,0 +1,8 @@
+import{W as e,X as t,Y as n}from"./hooks.js";import{d as r,f as i,l as a,t as o}from"./hooks.module.js";import{t as s}from"./jsxRuntime.module.js";r();var c=[{name:`Inter`,url:``+new URL(`Inter-VariableFont_opsz_wght.ttf`,import.meta.url).href}];function l({iframeRef:r,pdfUrl:i,onLoad:a,editable:o,toolbar:c=!0,disableSelection:l,minPixelRatio:d}){let f=e(r,null),[p]=n(`locale`),[m]=t(`newLayout`),h=u(f,l);return s(`iframe`,{ref:f,class:`pdf-preview`,style:{width:`100%`,height:`100%`},src:`pdfjs/web/viewer.html?v=${glob.triliumVersion}&file=${i}&locale=${p}&sidebar=${m?`0`:`1`}&editable=${o?`1`:`0`}&toolbar=${c?`1`:`0`}${d?`&minPixelRatio=${d}`:``}`,onLoad:()=>{h(),a?.()}})}function u(e,t){let n=o(null),r=i(()=>{let r=e.current?.contentDocument;if(!r)return;let i=r.createElement(`style`);i.id=`client-root-vars`,i.textContent=f(d()),n.current=i,r.head.appendChild(i);let a=r.createElement(`style`);if(a.textContent=c.map(p).join(`
+`),r.head.appendChild(a),t){let e=r.createElement(`style`);e.textContent=`.textLayer, .textLayer * { user-select: none !important; cursor: default !important; }`,r.head.appendChild(e)}},[e,t]);return a(()=>{let e=()=>{n.current.textContent=f(d())},t=window.matchMedia(`(prefers-color-scheme: dark)`);return t.addEventListener(`change`,e),()=>t.removeEventListener(`change`,e)},[e]),r}function d(){let e=getComputedStyle(document.documentElement),t={};for(let n=0;n<e.length;n++){let r=e[n];r.startsWith(`--`)&&(t[`--tn-${r.substring(2)}`]=e.getPropertyValue(r).trim())}return t}function f(e){return`:root {\n${Object.entries(e).map(([e,t])=>`  ${e}: ${t};`).join(`
+`)}\n}`}function p(e){return`
+        @font-face {
+            font-family: '${e.name}';
+            src: url('${e.url}');
+        }
+    `}export{l as t};

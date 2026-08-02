@@ -1,0 +1,1 @@
+import{n as e}from"./bootstrap.esm.js";function t(t){let n=[];for(let r of document.querySelectorAll(`.modal.show`)){if(r===t)continue;let i=e.getInstance(r)?._focustrap;i?._isActive&&(i.deactivate(),n.push(i))}return()=>{for(let e of n)e.activate()}}export{t};

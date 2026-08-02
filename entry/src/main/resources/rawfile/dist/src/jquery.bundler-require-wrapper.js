@@ -1,0 +1,1 @@
+import{a as e,t}from"./rolldown-runtime.js";import{r as n,t as r}from"./jquery2.module.js";var i=t(((t,i)=>{var{jQuery:a}=(r(),e(n));i.exports=a}));export{i as t};

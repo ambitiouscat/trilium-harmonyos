@@ -1,0 +1,1 @@
+import{Ui as e}from"./es.js";var t=e({"sheets-note-ui":{note:{placeholder:`ここに入力`},rightClick:{addNote:`コメントを追加`,deleteNote:`コメントを削除`,toggleNote:`コメントの表示/非表示`}}});export{t as default};

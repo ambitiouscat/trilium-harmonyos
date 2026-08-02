@@ -1,0 +1,1 @@
+import{d as e,t}from"./hooks.module.js";import{t as n}from"./jsxRuntime.module.js";import{t as r}from"./NoteMap.js";e();function i({note:e,noteContext:i}){let a=t(null);return n(`div`,{ref:a,children:n(r,{parentRef:a,note:e,widgetMode:i?.viewScope?.viewMode===`note-map`?`ribbon`:`type`})})}export{i as default};

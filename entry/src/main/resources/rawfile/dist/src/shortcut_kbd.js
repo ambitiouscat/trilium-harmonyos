@@ -1,0 +1,1 @@
+import{Mt as e,jt as t}from"./app_context.js";import{O as n}from"./i18n.js";import{t as r}from"./jsxRuntime.module.js";import{a as i}from"./react_utils2.js";function a(a){let o=t(a);return n()?r(`kbd`,{children:e(o)}):i(o.map((e,t)=>r(`kbd`,{children:e},t)),`+`)}export{a as t};

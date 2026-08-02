@@ -1,0 +1,1 @@
+import{t as e}from"./native_window2.js";export{e as syncNativeWindowWithTheme};

@@ -1,0 +1,1 @@
+import{n as e}from"./javascript2.js";export{e as jsonld};

@@ -1,0 +1,1 @@
+import{a as e}from"./i18n.js";import{t}from"./jsxRuntime.module.js";import{n}from"./RawHtml.js";var r=`zEY4DaJG4YT5`;function i(){return t(`div`,{className:`attribute-help`,children:[t(n,{html:e(`attribute_editor.help_text_body1`)}),t(n,{html:e(`attribute_editor.help_text_body2`)}),t(n,{html:e(`attribute_editor.help_text_body3`)})]})}export{i as n,r as t};

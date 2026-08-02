@@ -1,0 +1,1 @@
+function e(e,t){return e===`source`||e===`split`||e===`preview`?e:t?`preview`:`split`}function t(e){return!!(e?.isIconPack()&&e.type===`file`)}export{e as n,t};

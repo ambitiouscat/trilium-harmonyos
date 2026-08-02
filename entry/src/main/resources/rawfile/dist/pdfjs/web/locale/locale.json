@@ -1,0 +1,21 @@
+{
+    "tw": "tw/viewer.ftl",
+    "cn": "cn/viewer.ftl",
+    "ja": "ja/viewer.ftl",
+    "id": "id/viewer.ftl",
+    "cs": "cs/viewer.ftl",
+    "de": "de/viewer.ftl",
+    "en-GB": "en-GB/viewer.ftl",
+    "es": "es/viewer.ftl",
+    "fr": "fr/viewer.ftl",
+    "ga": "ga/viewer.ftl",
+    "it": "it/viewer.ftl",
+    "pl": "pl/viewer.ftl",
+    "pt_br": "pt_br/viewer.ftl",
+    "pt": "pt/viewer.ftl",
+    "ro": "ro/viewer.ftl",
+    "ru": "ru/viewer.ftl",
+    "uk": "uk/viewer.ftl",
+    "ar": "ar/viewer.ftl",
+    "hi": "hi/viewer.ftl"
+}

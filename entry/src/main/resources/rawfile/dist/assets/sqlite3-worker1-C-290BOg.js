@@ -1,0 +1,1 @@
+{let e=globalThis.location?new URL(globalThis.location.href).searchParams:new URLSearchParams,t=`sqlite3.js`;e.has(`sqlite3.dir`)&&(t=e.get(`sqlite3.dir`)+`/`+t),importScripts(t)}sqlite3InitModule().then(e=>e.initWorker1API());

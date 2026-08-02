@@ -1,0 +1,1 @@
+import{t as e}from"./typescript2.js";export default e();

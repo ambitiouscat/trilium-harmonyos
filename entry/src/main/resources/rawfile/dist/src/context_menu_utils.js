@@ -1,0 +1,1 @@
+import{rt as e}from"./hooks.js";import{a as t}from"./i18n.js";function n(n){return n.isArchived?{title:t(`board_view.unarchive-note`),uiIcon:`bx bx-archive-out`,handler:async()=>{e.removeOwnedLabelByName(n,`archived`)}}:{title:t(`board_view.archive-note`),uiIcon:`bx bx-archive`,handler:()=>e.addLabel(n.noteId,`archived`)}}export{n as t};

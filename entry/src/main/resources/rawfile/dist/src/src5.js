@@ -1,0 +1,1 @@
+import{c as e,t}from"./src4.js";import"./EditableText.js";export{t as AttributeEditor,e as attributeChangeAffectsHeading};

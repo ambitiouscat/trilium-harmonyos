@@ -1,0 +1,3 @@
+import{n as e}from"./rolldown-runtime-DAXXjFlN.js";function t(e){let t=n(e),r=[],i=[],a=``,o=!1,s=0;for(;s<t.length;){let e=t[s];if(o){if(e===`"`){if(t[s+1]===`"`){a+=`"`,s+=2;continue}o=!1,s++;continue}a+=e,s++;continue}if(e===`"`){o=!0,s++;continue}if(e===`,`){i.push(a),a=``,s++;continue}if(e===`
+`){i.push(a),a=``,r.push(i),i=[],s++;continue}if(e===`\r`){i.push(a),a=``,r.push(i),i=[],s+=t[s+1]===`
+`?2:1;continue}a+=e,s++}i.push(a),r.push(i);let c=r[r.length-1];return c.length===1&&c[0]===``&&r.pop(),r}function n(e){return e.charCodeAt(0)===65279?e.slice(1):e}var r=e((()=>{}));export{t as n,r as t};
