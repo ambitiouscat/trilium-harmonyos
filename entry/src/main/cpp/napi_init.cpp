@@ -29,6 +29,35 @@ static const char *kMainJsPatch =
     "import { i as __triliumRegNH } from './local-bridge2.js';\n"
     "if (typeof window.__triliumNativeHttp === 'function') { __triliumRegNH(window.__triliumNativeHttp); console.log('[ShellPatch] native http handler registered'); } else { console.log('[ShellPatch] WARNING: __triliumNativeHttp missing at main.js eval'); }\n";
 
+// 4.1 冷启动优化（polish-release）传输层补丁，不改 dist 源文件：
+// src chunk：首个 consistency check 由 dbReady+4s 推迟到 +60s（小时级周期不变），
+// 避开启动后首个交互窗口的 CPU/写库突发（实测 content hash 计算 449ms 在该任务里）。
+// （worker 并行初始化补丁曾实测：WASM 编译与 2MB chunk 解析争用 CPU，净收益为 0，已移除。）
+static const char *kSrcChunkPath = "/assets/src-BqS_D0t5.js";
+static const char *kConsistencyAnchor = "setTimeout(_n(hc),4*1e3)";
+static const char *kConsistencyPatched = "setTimeout(_n(hc),6e4)";
+
+// 对读出的 dist JS 应用 4.1 补丁；命中时替换 buf/size（释放旧缓冲），返回 true。
+static bool ApplyStartupPatches(const std::string &path, uint8_t *&buf, long &size) {
+    if (path == kSrcChunkPath) {
+        std::string orig((const char *)buf, (size_t)size);
+        auto pos = orig.find(kConsistencyAnchor);
+        if (pos == std::string::npos) {
+            OH_LOG_WARN(LOG_APP, "[ShellPatch] consistency anchor missing (dist drift?), serve original");
+            return false;
+        }
+        orig.replace(pos, strlen(kConsistencyAnchor), kConsistencyPatched);
+        uint8_t *nb = (uint8_t *)malloc(orig.size());
+        memcpy(nb, orig.data(), orig.size());
+        free(buf);
+        buf = nb;
+        size = (long)orig.size();
+        OH_LOG_INFO(LOG_APP, "[ShellPatch] served src chunk with deferred first consistency check");
+        return true;
+    }
+    return false;
+}
+
 // 生命周期：request/handler/response/body 缓冲全部延到 OnRequestStop 里释放，
 // 在 OnRequestStart 里提前释放会让 IO 线程 UAF 崩溃（实测 SIGSEGV）。
 struct PendingReq {
@@ -163,6 +192,9 @@ static void OnSwRequestStart(const ArkWeb_SchemeHandler *schemeHandler,
             size += (long)patchLen;
             pending->buf = buf;
             OH_LOG_INFO(LOG_APP, "sw-handler served main.js with native-http patch");
+        }
+        if (readOk && ApplyStartupPatches(path, buf, size)) {
+            pending->buf = buf;
         }
         if (!readOk) {
             OH_LOG_ERROR(LOG_APP, "sw-handler read fail %{public}s size=%{public}ld got=%{public}ld",

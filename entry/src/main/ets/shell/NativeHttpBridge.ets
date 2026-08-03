@@ -20,6 +20,10 @@ import { http } from '@kit.NetworkKit';
 import { webview } from '@kit.ArkWeb';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { buffer } from '@kit.ArkTS';
+import { pasteboard, BusinessError } from '@kit.BasicServicesKit';
+import { image } from '@kit.ImageKit';
+import { Environment, fileIo as fs, picker } from '@kit.CoreFileKit';
+import { common } from '@kit.AbilityKit';
 
 const TAG = 'SHELL_HTTP';
 const DOMAIN = 0x0001;
@@ -41,6 +45,11 @@ interface BridgeResponsePayload {
   headers: Record<string, string>;
   body: string;
   base64: boolean;
+}
+
+interface BlobDownloadPayload {
+  filename: string;
+  base64: string;
 }
 
 function toRequestMethod(method: string): http.RequestMethod {
@@ -169,6 +178,182 @@ export class NativeHttpBridge {
   // 分段传输阈值/片长：payload 超阈值时切片经多次 runJavaScript 回传，
   // 保证 ArkTS 侧除 payloadStr 本身外不再分配超大字符串（OOM 修复：
   // 单次 runJavaScript 携带 ~121MB 字符串时 SharedHeap::AllocateHugeObject 失败）
+  /**
+   * 1.2 剪贴板降级桥：web 侧 navigator.clipboard.writeText 被 NotAllowedError 拒绝时回落到此。
+   * 注意：javaScriptProxy 的 async 方法对 JS 是 fire-and-forget（JS 侧拿不到 Promise），
+   * 因此统一走 id + runJavaScript 回调（__triliumPbResolve）返回结果。
+   */
+  pasteboardSetText(id: string, text: string): void {
+    (async () => {
+      try {
+        const data = pasteboard.createPlainTextData(text);
+        await pasteboard.getSystemPasteboard().setData(data);
+        hilog.info(DOMAIN, TAG, 'pasteboard text set len=%{public}d', text.length);
+        this.deliverPbResult(id, 'ok');
+      } catch (err) {
+        hilog.error(DOMAIN, TAG, 'pasteboardSetText failed: %{public}s', JSON.stringify(err));
+        this.deliverPbResult(id, `error:${JSON.stringify(err)}`);
+      }
+    })();
+  }
+
+  /** 1.2 剪贴板降级桥（图片）：PNG base64 -> PixelMap -> 系统剪贴板。 */
+  pasteboardSetImagePng(id: string, base64Str: string): void {
+    (async () => {
+      let source: image.ImageSource | null = null;
+      try {
+        const buf = buffer.from(base64Str, 'base64');
+        const view = buf.subarray(0, buf.length);
+        const u8 = new Uint8Array(view.length);
+        for (let i = 0; i < view.length; i++) {
+          u8[i] = view[i];
+        }
+        const ab = u8.buffer as ArrayBuffer;
+        hilog.info(DOMAIN, TAG, 'pasteboardSetImagePng decode bytes=%{public}d b64len=%{public}d head=%{public}s',
+          buf.length, base64Str.length, base64Str.substring(0, 24));
+        source = image.createImageSource(ab);
+        const info = await source.getImageInfo();
+        hilog.info(DOMAIN, TAG, 'image info %{public}dx%{public}d', info.size.width, info.size.height);
+        const pixelMap = await source.createPixelMap();
+        const data = pasteboard.createData(pasteboard.MIMETYPE_PIXELMAP, pixelMap);
+        await pasteboard.getSystemPasteboard().setData(data);
+        await pixelMap.release();
+        hilog.info(DOMAIN, TAG, 'pasteboard image set (pixelMap) bytes=%{public}d', buf.length);
+        this.deliverPbResult(id, 'ok');
+      } catch (err) {
+        hilog.error(DOMAIN, TAG, 'pasteboardSetImagePng decode path failed: %{public}s', JSON.stringify(err));
+        // 解码失败降级：按 image/png 原始字节写入剪贴板（UDMF 通用类型）
+        try {
+          const buf2 = buffer.from(base64Str, 'base64');
+          const view2 = buf2.subarray(0, buf2.length);
+          const u82 = new Uint8Array(view2.length);
+          for (let i = 0; i < view2.length; i++) {
+            u82[i] = view2[i];
+          }
+          const ab2 = u82.buffer as ArrayBuffer;
+          const data2 = pasteboard.createData('image/png', ab2);
+          await pasteboard.getSystemPasteboard().setData(data2);
+          hilog.info(DOMAIN, TAG, 'pasteboard image set (raw png) bytes=%{public}d', buf2.length);
+          this.deliverPbResult(id, 'ok:rawpng');
+        } catch (err2) {
+          hilog.error(DOMAIN, TAG, 'pasteboardSetImagePng raw path failed: %{public}s', JSON.stringify(err2));
+          this.deliverPbResult(id, `error:${JSON.stringify(err2)}`);
+        }
+      } finally {
+        if (source) {
+          try {
+            await source.release();
+          } catch (err) {
+            // 释放失败不影响结果
+          }
+        }
+      }
+    })();
+  }
+
+  /**
+   * 2.2 下载落盘（picker 方案）：web 侧下载内容经此方法，弹系统保存位置选择器
+   * （DocumentViewPicker save 模式，默认文件名=原文件名），用户确认后经授权 URI 写入。
+   * picker 取消/不可用时降级写应用沙箱 filesDir/Download 并在结果里标注。
+   * 真机实测 getUserDownloadDir() 不可写（13900001），故改为 picker 授权 URI 路径。
+   */
+  saveBlobDownload(id: string, payloadJson: string): void {
+    (async () => {
+      const errStr = (e: Object): string => {
+        const be = e as BusinessError;
+        return `${be.code !== undefined ? be.code + ':' : ''}${be.message ?? JSON.stringify(e)}`;
+      };
+      try {
+        const payload = JSON.parse(payloadJson) as BlobDownloadPayload;
+        const buf = buffer.from(payload.base64, 'base64');
+        // 注意：ArkTS buffer.from 的 byteOffset/buffer 语义不可靠（实测 byteOffset=56 而
+        // buffer 恰为负载长度，slice(byteOffset..) 被钳掉头部 56B），只能用 subarray 逐字节拷贝
+        const view = buf.subarray(0, buf.length);
+        const u8 = new Uint8Array(view.length);
+        for (let i = 0; i < view.length; i++) {
+          u8[i] = view[i];
+        }
+        const result = await this.saveWithPicker(payload.filename, u8.buffer as ArrayBuffer);
+        this.deliverPbResult(id, result);
+      } catch (err) {
+        hilog.error(DOMAIN, TAG, 'saveBlobDownload failed: %{public}s', errStr(err as Object));
+        this.deliverPbResult(id, `error:${errStr(err as Object)}`);
+      }
+    })();
+  }
+
+  /**
+   * 供 saveBlobDownload（web 下载内容）与 WebDownloadManager delegate（下载完成后的
+   * 临时文件）共用：picker 选位置 -> 写入 -> 校验。返回 'ok:<uri>' / 'sandbox:<path>' /
+   * 'cancelled'（用户取消时），异常抛出。
+   */
+  async saveWithPicker(filename: string, ab: ArrayBuffer): Promise<string> {
+    const safeName = filename.replace(/[\/\\:*?"<>|]/g, '_');
+    const picked = await this.pickSaveUri(safeName);
+    if (picked === 'CANCELLED') {
+      hilog.info(DOMAIN, TAG, 'picker cancelled by user %{public}s', safeName);
+      return 'cancelled';
+    }
+    let uri = picked;
+    let sandbox = false;
+    if (!uri) {
+      // picker 不可用（非用户取消）：降级写应用沙箱
+      const dir = `${this.filesDir}/Download`;
+      if (!fs.accessSync(dir)) {
+        fs.mkdirSync(dir, true);
+      }
+      uri = `${dir}/${safeName}`;
+      sandbox = true;
+      hilog.warn(DOMAIN, TAG, 'picker unavailable, fallback to sandbox %{public}s', uri);
+    }
+    const file = fs.openSync(uri, fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE | fs.OpenMode.TRUNC);
+    const written = fs.writeSync(file.fd, ab);
+    fs.closeSync(file);
+    const finalStat = fs.statSync(uri);
+    hilog.info(DOMAIN, TAG, 'download saved %{public}s expect=%{public}d written=%{public}d final=%{public}d sandbox=%{public}s',
+      uri, ab.byteLength, written, finalStat.size, String(sandbox));
+    if (finalStat.size !== ab.byteLength) {
+      throw new Error(`size mismatch expect ${ab.byteLength} got ${finalStat.size}`);
+    }
+    return `${sandbox ? 'sandbox' : 'ok'}:${uri}`;
+  }
+
+  private async pickSaveUri(filename: string): Promise<string> {
+    if (!this.uiContext) {
+      hilog.error(DOMAIN, TAG, 'pickSaveUri: no uiContext');
+      return '';
+    }
+    try {
+      const opts = new picker.DocumentSaveOptions();
+      opts.newFileNames = [filename];
+      const docPicker = new picker.DocumentViewPicker(this.uiContext);
+      const uris = await docPicker.save(opts);
+      hilog.info(DOMAIN, TAG, 'picker save result %{public}s', JSON.stringify(uris));
+      // 用户取消返回空数组（区别于异常=不可用）
+      return uris && uris.length > 0 ? uris[0] : 'CANCELLED';
+    } catch (err) {
+      const be = err as BusinessError;
+      hilog.error(DOMAIN, TAG, 'picker save failed %{public}s:%{public}s',
+        String(be.code), be.message ?? JSON.stringify(err));
+      return '';
+    }
+  }
+
+  private filesDir: string = '';
+  private uiContext: common.UIAbilityContext | null = null;
+
+  setFilesDir(filesDir: string): void {
+    this.filesDir = filesDir;
+  }
+
+  setUiContext(uiContext: common.UIAbilityContext): void {
+    this.uiContext = uiContext;
+  }
+
+  private deliverPbResult(id: string, result: string): void {
+    this.runOnPage(`window.__triliumPbResolve(${JSON.stringify(id)}, ${JSON.stringify(result)});`);
+  }
+
   private deliverResolve(id: string, payloadStr: string): void {
     const idArg = JSON.stringify(id);
     if (payloadStr.length <= CHUNK_THRESHOLD) {
