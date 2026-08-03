@@ -18,7 +18,6 @@
 import { webview, WebNetErrorList } from '@kit.ArkWeb';
 import { buffer } from '@kit.ArkTS';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { window } from '@kit.ArkUI';
 import { BusinessError, deviceInfo } from '@kit.BasicServicesKit';
 import { fileIo as fs } from '@kit.CoreFileKit';
 import { common } from '@kit.AbilityKit';
@@ -490,7 +489,6 @@ struct Shell {
   schemeHandler: webview.WebSchemeHandler = new webview.WebSchemeHandler();
   httpBridge: NativeHttpBridge = new NativeHttpBridge();
   downloadDelegate: webview.WebDownloadDelegate = new webview.WebDownloadDelegate();
-  @State bottomPad: number = 0;
   @State showSplash: boolean = true;
   private cookieVerified: boolean = false;
   private hookScripts: Array<ScriptItem> = [
@@ -525,18 +523,8 @@ struct Shell {
         this.showSplash = false;
       }
     }, 10000);
-    // 3.4 键盘适配：键盘弹出时收缩视口（2in1 主要为软键盘场景）
-    try {
-      window.getLastWindow(getContext(this)).then((win: window.Window) => {
-        win.on('avoidAreaChange', (data: window.AvoidAreaOptions) => {
-          if (data.type === window.AvoidAreaType.TYPE_KEYBOARD) {
-            this.bottomPad = data.area.bottomRect.height;
-          }
-        });
-      });
-    } catch (err) {
-      hilog.error(DOMAIN, TAG, 'avoidAreaChange setup failed: %{public}s', JSON.stringify(err));
-    }
+    // 3.4 键盘适配：改用 ArkWeb 原生避让（见 Web 组件 .keyboardAvoidMode），
+    // 不再手工监听 avoidAreaChange 写 @State padding（动画期高频回调与 Web resize 互踢导致闪屏）
   }
 
   // 2.1/2.2 接入 WebDownloadManager（picker 方案）：onBeforeDownload 是同步流程，
@@ -876,6 +864,9 @@ struct Shell {
         })
         .width('100%')
         .layoutWeight(1)
+        // 3.4 键盘适配：RESIZE_VISUAL 只缩 visual viewport，不触发 layout 重排，
+        // 输入框不被遮挡且页面不抖（手工 avoidAreaChange+padding 方案在手机上实测闪屏，已移除）
+        .keyboardAvoidMode(WebKeyboardAvoidMode.RESIZE_VISUAL)
       }
       .width('100%')
       .height('100%')
@@ -914,7 +905,6 @@ struct Shell {
     }
     .width('100%')
     .height('100%')
-    .padding({ bottom: this.bottomPad })
     .backgroundColor('#1e1e22')
   }
 }
